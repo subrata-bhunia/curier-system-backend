@@ -43,7 +43,7 @@ try {
 
 // -----------------All Orders------------------------------- //
 app.get('/allOrders',(req,res)=>{
-   const query2=`SELECT * from CURIER_SERVICE  `;
+   const query2=`SELECT order_id from CURIER_SERVICE`;
  connection= oracledb.getConnection({
     user: "subrata",
     password: "subrata",
@@ -65,8 +65,8 @@ app.get('/allOrders',(req,res)=>{
   })
 });
 
-// -------------------------------- //
-app.get('/addOrders', (req, res)=>{
+// --------------------ADD ORDERS------------ //
+app.post('/addOrders', (req, res)=>{
   var Ord=req.body;
   const OrderData=[
     Ord.order_id,
@@ -84,7 +84,7 @@ app.get('/addOrders', (req, res)=>{
     Ord.reciver_address,
     Ord.reciver_mobile
   ];
-  console.log(OrderData)
+  console.log("OrderData==>",OrderData)
   const addOrderQuery = `INSERT INTO CURIER_SERVICE
    VALUES (:0, :1, :2 , :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13)`;
    connection= oracledb.getConnection({
@@ -135,7 +135,7 @@ app.get('/order_id/:order_id',async (req,res)=>{
   })
 });
 
-// --------------------------------------------------------- //
+// ----------------------SEARCH BY TRACKING ID----------------------------------- //
 app.get('/tracking_id/:tracking_id',async (req,res)=>{
   const tracking_id=req.params.tracking_id;
   const queryForTrackingId=`Select * from CURIER_SERVICE where tracking_id=${tracking_id}`
@@ -159,6 +159,40 @@ app.get('/tracking_id/:tracking_id',async (req,res)=>{
    });
   })
 });
+// ----------------------------UPADTE ORDER STATUS----------------- \\
+app.get('/update/:orderId/:orderStatus',(req,res)=>{
+  // const order_id =req.params. ;
+  // const order_status = req.params.order_status;
+  // var Body=req.body;
+  const updateData=[req.params.orderStatus,req.params.orderId]
+  console.log(updateData);
+  // const query2=`SELECT order_id from CURIER_SERVICE`;
+  const Order_status_updateQuery = `UPDATE CURIER_SERVICE SET order_status = :1 
+  where order_id IN (select order_id from CURIER_SERVICE where order_id = :2 )`
+    
+  // console.log(order_id,order_status);
+  connection= oracledb.getConnection({
+    user: "SUBRATA",
+    password: "subrata",
+    connectString: "127.0.0.1/XE"
+   },
+     function(err, connection) {
+        if (err) { console.error("err1111===>",err); return ; 
+        }
+   connection.execute(
+    Order_status_updateQuery,updateData,{autoCommit:true},
+    // query2,
+    function(err, result) {
+      if (err) {
+        console.error("-=-=-=-=>",err.message);
+        return;
+      }
+      console.log(result);
+      res.status(200).send(result);
+      // res.status(400).send(err)
+   });
+  })
+})
 
 // ------------------------------------------------------------------- //
 app.get('/',(req,res)=>{
